@@ -1,0 +1,30 @@
+{
+  "name": "anura-filesystem",
+  "version": "0.0.1",
+  "description": "anura-config file system server plugin",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "babel src/ --watch --out-dir lib/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnuraConfig/anura-filesystem.git"
+  },
+  "author": "HenShalom",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AnuraConfig/anura-filesystem/issues"
+  },
+  "homepage": "https://github.com/AnuraConfig/anura-filesystem#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1"
+  },
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "rimraf": "^2.6.3"
+  }
+}
