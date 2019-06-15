@@ -3,12 +3,14 @@ import path from 'path'
 import rimraf from "rimraf"
 import * as filesConst from './consts'
 import { getFileName, getNameFromFile, getConfigVersion } from './helperFunctions'
+import { configConvertor } from 'anura-data-manager'
+import { validConfigType, logAndThrow } from 'anura-data-manager/lib/validation'
+import { DataConnectorsAbstract } from 'anura-data-manager/lib/interfaces'
 
+export default class FileSystemManager extends DataConnectorsAbstract {
 
-export default class FileSystemManager {
-    constructor({ location, log, configConvertor }) {
-        this.configConvertor = configConvertor
-        this.log = log
+    constructor({ location, log, stateManager }) {
+        super(log, stateManager)
         this.location = path.join(location, filesConst.BASE)
         this._createDir(this.location)
     }
@@ -104,11 +106,8 @@ export default class FileSystemManager {
     }
 
     _validateUpdateConfig(dir, data, type) {
-        if (!fs.existsSync(dir)){
-            const message = `no such service or environment in service list`
-            this.log(message)
-            throw new Error(message)
-        }
+        if (!fs.existsSync(dir)) logAndThrow(`no such service or environment in service list`, this.log)
+        validConfigType(data, type, this.log)
     }
 
     _createInfoFile(item, dir) {
@@ -123,6 +122,7 @@ export default class FileSystemManager {
     }
     _createEnv(serviceDir, { name, config }) {
         const envDir = path.join(serviceDir, name)
+        validConfigType(config.data, config.type, this.log)
         this._createDir(envDir)
         this._createInfoFile({ name, lastUpdate: new Date() }, envDir)
         this._createConfigFile(envDir, config.data, config.type, 0)
