@@ -9,9 +9,9 @@ import { DataConnectorsAbstract } from 'anura-data-manager/lib/interfaces'
 
 export default class FileSystemManager extends DataConnectorsAbstract {
 
-    constructor({ location, log, stateManager }) {
+    constructor({ config, log, stateManager }) {
         super(log, stateManager)
-        this.location = path.join(location, filesConst.BASE)
+        this.location = path.join(config.STORE_LOCATION, filesConst.BASE)
         this._createDir(this.location)
     }
     static getName = () => "File System"
