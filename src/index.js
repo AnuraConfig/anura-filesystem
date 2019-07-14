@@ -22,6 +22,11 @@ export default class FileSystemManager extends DataConnectorsAbstract {
         this._createInfoFile({ name, description, lastUpdate: new Date() }, serviceDirectory)
         environments.forEach(this._createEnv.bind(this, serviceDirectory))
     }
+    
+    deleteService(serviceName) {
+        const serviceDirectory = path.join(this.location, serviceName)
+        rimraf.sync(serviceDirectory)
+    }
 
     getService(serviceName, raw, lastConfig) {
         const dir = path.join(this.location, serviceName)
