@@ -1,6 +1,6 @@
 {
   "name": "anura-filesystem",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "anura-config file system server plugin",
   "main": "lib/index.js",
   "scripts": {
