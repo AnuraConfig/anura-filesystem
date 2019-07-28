@@ -3,17 +3,26 @@ import path from 'path'
 import rimraf from "rimraf"
 import * as filesConst from './consts'
 import { getFileName, getNameFromFile, getConfigVersion } from './helperFunctions'
-import { configConvertor } from 'anura-data-manager'
 import { validConfigType, logAndThrow } from 'anura-data-manager/lib/validation'
 import { DataConnectorsAbstract } from 'anura-data-manager/lib/interfaces'
+import { ConfigParser, defaultParse } from 'anura-data-manager'
+
+const toString = {// todo: temp entail #70 at anura-server is resolved
+    key: "data",
+    name: "stringify object inject",
+    condition: (config, options) => !options.isRaw,
+    parse: (config, options) => JSON.stringify(config.data)
+}
 
 export default class FileSystemManager extends DataConnectorsAbstract {
-
-    constructor({ config, log, stateManager }) {
-        super(log, stateManager)
+    constructor({ config, log, stateManager, configParser = new ConfigParser([...defaultParse, toString]) }) {
+        super(log, stateManager, configParser)
         this.location = path.join(config.STORE_LOCATION, filesConst.BASE)
         this._createDir(this.location)
+        this._createDir(path.join(this.location, filesConst.GENERAL_DATA))
+        this.globalVariables = this.getGlobalVariable()
     }
+
     static getName = () => "File System"
 
     createService({ name, description, environments }) {
@@ -22,7 +31,7 @@ export default class FileSystemManager extends DataConnectorsAbstract {
         this._createInfoFile({ name, description, lastUpdate: new Date() }, serviceDirectory)
         environments.forEach(this._createEnv.bind(this, serviceDirectory))
     }
-    
+
     deleteService(serviceName) {
         const serviceDirectory = path.join(this.location, serviceName)
         rimraf.sync(serviceDirectory)
@@ -89,6 +98,18 @@ export default class FileSystemManager extends DataConnectorsAbstract {
         })
     }
 
+    getGlobalVariable() {
+        const generalDataDir = path.join(this.location, filesConst.GENERAL_DATA)
+        if (!fs.existsSync(path.join(generalDataDir, filesConst.GLOBAL_CONFIG_JSON))) return {}
+        return this._parseFile(generalDataDir, filesConst.GLOBAL_CONFIG_JSON)
+    }
+
+    saveGlobalVariable(globalVariables) {
+        const globalVariableFile = path.join(this.location, filesConst.GENERAL_DATA, filesConst.GLOBAL_CONFIG_JSON)
+        this.globalVariables = globalVariables
+        fs.writeFileSync(globalVariableFile, JSON.stringify(globalVariables))
+    }
+
     //#region privates
     _updateEnvironments(newEnvironments, oldEnvironments, serviceDirectory) {
         for (let environment of newEnvironments) {
@@ -132,16 +153,15 @@ export default class FileSystemManager extends DataConnectorsAbstract {
         this._createInfoFile({ name, lastUpdate: new Date() }, envDir)
         this._createConfigFile(envDir, config.data, config.type, 0)
     }
-    _createConfigObject(dir, filename, raw) {
+    _createConfigObject(dir, filename, isRaw) {
         let configFile = Object.assign({
             name: getNameFromFile(filename),
             version: getConfigVersion(filename)
         }, this._parseFile(dir, filename))
-        if (raw)
-            return configFile
-        configFile.data = JSON.stringify(configConvertor.getObject(configFile.data, configFile.type))
+        configFile = this.configParser.parseConfig(configFile, { isRaw, globalVariables: this.globalVariables })
         return configFile
     }
+
     _parseFile(dir, base) {
         const infoFile = path.format({ dir, base })
         const data = fs.readFileSync(infoFile, "utf8")
@@ -158,8 +178,11 @@ export default class FileSystemManager extends DataConnectorsAbstract {
             .filter(i => !isNaN(i)))
     }
     _readInfos(source) {
-        const isDirectory = source => fs.lstatSync(source).isDirectory()
-        const directories = fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectory)
+        const isDirectory = path => fs.lstatSync(path).isDirectory()
+        const directories = fs.readdirSync(source)
+            .filter(name => name !== filesConst.GENERAL_DATA)
+            .map(name => path.join(source, name))
+            .filter(isDirectory)
         return directories.map(dir => this._parseFile(dir, getFileName(filesConst.INFO_FILE)))
     }
     _getAllServicesInfo() {

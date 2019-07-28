@@ -26,7 +26,7 @@
     "mocha": "^6.1.4"
   },
   "dependencies": {
-    "anura-data-manager": "0.0.2",
+    "anura-data-manager": "0.0.3",
     "fs": "0.0.1-security",
     "path": "^0.12.7",
     "rimraf": "^2.6.3"
