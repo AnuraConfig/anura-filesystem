@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "start": "babel src/ --watch --out-dir lib/",
+    "build": "babel src/ --out-dir lib/",
     "test": "mocha --require babel-register --require babel-polyfill --recursive ./test --exit  "
   },
   "repository": {
