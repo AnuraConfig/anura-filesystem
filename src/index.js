@@ -6,6 +6,7 @@ import { getFileName, getNameFromFile, getConfigVersion } from './helperFunction
 import { validConfigType, logAndThrow } from 'anura-data-manager/lib/validation'
 import { DataConnectorsAbstract } from 'anura-data-manager/lib/interfaces'
 import { ConfigParser, defaultParse } from 'anura-data-manager'
+import NoSuchOptionError from './Errors/NoSuchOptionError'
 
 const toString = {// todo: temp entail #70 at anura-server is resolved
     key: "data",
@@ -107,7 +108,7 @@ export default class FileSystemManager extends DataConnectorsAbstract {
     saveGlobalVariable(globalVariables) {
         const globalVariableFile = path.join(this.location, filesConst.GENERAL_DATA, filesConst.GLOBAL_CONFIG_JSON)
         this.globalVariables = globalVariables
-        fs.writeFileSync(globalVariableFile, JSON.stringify(globalVariables))
+        fs.writeFileSync(globalVariableFile, globalVariables ? JSON.stringify(globalVariables) : {})
     }
 
     //#region privates
@@ -153,12 +154,20 @@ export default class FileSystemManager extends DataConnectorsAbstract {
         this._createInfoFile({ name, lastUpdate: new Date() }, envDir)
         this._createConfigFile(envDir, config.data, config.type, 0)
     }
+    _getConfigGlobalVariable() {
+        const { GLOBAL_VARIABLE_POLICY } = this.config
+        if (!GLOBAL_VARIABLE_POLICY || GLOBAL_VARIABLE_POLICY === filesConst.MEMORY_POLICY)
+            return this.globalVariables
+        if ( GLOBAL_VARIABLE_POLICY === filesConst.DISK_POLICY)
+            return  this.getGlobalVariable()
+        throw NoSuchOptionError()
+    }
     _createConfigObject(dir, filename, isRaw) {
         let configFile = Object.assign({
             name: getNameFromFile(filename),
             version: getConfigVersion(filename)
         }, this._parseFile(dir, filename))
-        configFile = this.configParser.parseConfig(configFile, { isRaw, globalVariables: this.globalVariables })
+        configFile = this.configParser.parseConfig(configFile, { isRaw, globalVariables: this._getConfigGlobalVariable() })
         return configFile
     }
 
