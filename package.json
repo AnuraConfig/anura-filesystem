@@ -24,7 +24,7 @@
     "babel-preset-stage-0": "^6.24.1",
     "chai": "^4.2.0",
     "lodash": "^4.17.11",
-    "mocha": "^6.1.4"
+    "mocha": "^10.2.0"
   },
   "dependencies": {
     "anura-data-manager": "0.0.3",
